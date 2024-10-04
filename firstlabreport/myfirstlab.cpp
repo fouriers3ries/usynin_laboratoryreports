@@ -34,8 +34,7 @@ std::ostream& operator<< (std::ostream& out, const Pipe& pipe) {
 	out << "Name: " << pipe.pipeName << '\n' <<
 		"Length: " << pipe.length << " m." << '\n' <<
 		"Diameter: " << pipe.diameter << " mm." << '\n';
-	std::string status = pipe.isRepairing ? "not in repairing\n\n" : "in repairing\n\n";
-	out << "Repairing status: " << status;
+	out << "Repairing status: " << (pipe.isRepairing ? "not in repairing\n\n" : "in repairing\n\n");
 	return out;
 };
 
@@ -50,8 +49,8 @@ std::ostream& operator<< (std::ostream& out, const CS& CS) {
 };
 
 // function for printing errors according to its errorcode
-void ProcessError(std::istream& in, int errorcode) {//!!!!!!!!!!!!!!!
-	std::vector<std::string> errors{ "Choose an option from the list!\n", "Error! Enter a positive integer!\n" ,
+void ProcessError(std::istream& in, int errorcode) {
+	std::vector<std::string> errors { "Choose an option from the list!\n", "Error! Enter a positive integer!\n" ,
 	"Error! Enter a positive number!\n", "Error! Choose 1 or 0!\n", "Error! Enter a number between 0.00 and 1.00\n",
 	"Error! Busy workshop quantity shouldn't be greater than total workshops quantity!\n" };
 	std::cout << errors[errorcode];
@@ -119,74 +118,61 @@ std::istream& operator>> (std::istream& in, CS& CS) {
 void SavePipe(const Pipe& pipeToSave) {
 	std::ofstream file("data.txt");
 	if (file.is_open()) {
+		if (pipeToSave.pipeName != "") {
 		file << pipeToSave.pipeName << '\n' << pipeToSave.length << '\n' <<
-			pipeToSave.diameter << '\n';
-		file << (pipeToSave.isRepairing ? "not in repairing\n" : "in repairing\n");
+			pipeToSave.diameter << '\n' << pipeToSave.isRepairing << '\n';
+		} else std::cout << "Pipe data was not written (there's no added pipe)\n";
+		file << "-\n";
 		file.close();
 	}
 	else std::cout << "Error! File cannot be open!\n";
 }
 
 void SaveCS(const CS& CSToSave) {
-	std::ofstream file;
-	file.open("data.txt", std::ios::app);
+	std::ofstream file("data.txt", std::ios::app);
 	if (file.is_open()) {
-		file << "Information about CS" << '\n';
 		if (CSToSave.CSName != "") {
-			file << CSToSave.CSName << '\n' << CSToSave.workshopsQuantity << '\n' <<
-				CSToSave.busyWorkshopsQuantity << '\n' << CSToSave.effectiveness;
-			file.close();
-		}
+		file << CSToSave.CSName << '\n' << CSToSave.workshopsQuantity << '\n' <<
+			CSToSave.busyWorkshopsQuantity << '\n' << CSToSave.effectiveness;
+		} else std::cout << "CS data was not written (there's no added CS)\n";
+		file.close();
 	}
 	else std::cout << "Error! File cannot be open!\n";
 }
 
-void Save(const Pipe& pipeToSave, const CS& CSToSave) {//!!!!!!!!!!!!!!
-	std::ofstream file("data.txt");
-	if (pipeToSave.length == 0) std::cout << "Pipe data was not written (there's no added pipe)\n";
-	if (CSToSave.workshopsQuantity == 0) std::cout << "CS data was not written(there's no added CS)\n";
+void Save(const Pipe& pipeToSave, const CS& CSToSave) {
 	SavePipe(pipeToSave);
 	SaveCS(CSToSave);
 }
 
 void LoadPipe(Pipe& pipeToEdit) {
 	std::ifstream file("data.txt");
-	std::string temp;
-	file >> temp;
 	if (file.is_open()) {
-		if (temp != "") {
-			file >> pipeToEdit.pipeName;
+		std::getline(file >> std::ws, pipeToEdit.pipeName);
+		if (pipeToEdit.pipeName == "-") pipeToEdit.length = 0;
+		else {
 			file >> pipeToEdit.length;
 			file >> pipeToEdit.diameter;
 			file >> pipeToEdit.isRepairing;
 		}
-	}
-	else {
-		std::cout << "Error! File cannot be open!\n";
-	}
-	file.close();
-
+		file.close();
+	} else std::cout << "Error! File cannot be open!\n";
 }
 
 void LoadCS(CS& CSToEdit) {
 	std::ifstream file("data.txt");
-	std::string temp = "";
 	if (file.is_open()) {
-		while (temp != "Information about CS") {//!!!!!!!!
-			file >> temp;
+		file.ignore(std::numeric_limits<std::streamsize>::max(), '-');
+		if (!std::getline(file >> std::ws, CSToEdit.CSName)) CSToEdit.workshopsQuantity = 0;
+		else {
+			file >> CSToEdit.workshopsQuantity >> CSToEdit.busyWorkshopsQuantity >>
+				CSToEdit.effectiveness;
 		}
-		if (temp != "") {
-			file >> CSToEdit.CSName;
-			file >> CSToEdit.workshopsQuantity;
-			file >> CSToEdit.busyWorkshopsQuantity;
-			file >> CSToEdit.effectiveness;
-		}
-	}
-	file.close();
+		file.close();
+	} else std::cout << "Error! File cannot be open!\n";
 }
 
 void Load(Pipe& pipeToEdit, CS& CSToEdit) {
-	std::ofstream file("data.txt");
 	LoadPipe(pipeToEdit);
 	LoadCS(CSToEdit);
 }
@@ -232,6 +218,6 @@ int main() {
 		case 0:
 			return 0;
 		}
-
+		
 	}
 }
