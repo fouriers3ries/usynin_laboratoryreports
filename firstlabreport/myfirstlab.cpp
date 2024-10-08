@@ -18,7 +18,7 @@ struct CS {
 };
 
 bool isUserChoiceCorrect(int choice) {
-	return (choice == 0 || choice >= 1 && choice <= 9) ? true : false;
+	return (choice == 0 || choice >= 1 && choice <= 9);
 }
 
 void ShowMenu() {
@@ -115,66 +115,51 @@ std::istream& operator>> (std::istream& in, CS& CS) {
 	return in;
 };
 
-void SavePipe(const Pipe& pipeToSave) {
-	std::ofstream file("data.txt");
-	if (file.is_open()) {
-		if (pipeToSave.pipeName != "") {
-		file << pipeToSave.pipeName << '\n' << pipeToSave.length << '\n' <<
-			pipeToSave.diameter << '\n' << pipeToSave.isRepairing << '\n';
-		} else std::cout << "Pipe data was not written (there's no added pipe)\n";
-		file << "-\n";
-		file.close();
-	}
-	else std::cout << "Error! File cannot be open!\n";
+void SavePipe(const Pipe& pipeToSave, std::ofstream& file) {
+	file << pipeToSave.pipeName << '\n' << pipeToSave.length << '\n' <<
+		pipeToSave.diameter << '\n' << pipeToSave.isRepairing << '\n';
 }
 
-void SaveCS(const CS& CSToSave) {
-	std::ofstream file("data.txt", std::ios::app);
-	if (file.is_open()) {
-		if (CSToSave.CSName != "") {
-		file << CSToSave.CSName << '\n' << CSToSave.workshopsQuantity << '\n' <<
+void SaveCS(const CS& CSToSave, std::ofstream& file) {
+	file << CSToSave.CSName << '\n' << CSToSave.workshopsQuantity << '\n' <<
 			CSToSave.busyWorkshopsQuantity << '\n' << CSToSave.effectiveness;
-		} else std::cout << "CS data was not written (there's no added CS)\n";
-		file.close();
-	}
-	else std::cout << "Error! File cannot be open!\n";
 }
 
 void Save(const Pipe& pipeToSave, const CS& CSToSave) {
-	SavePipe(pipeToSave);
-	SaveCS(CSToSave);
+	std::ofstream file("data.txt");
+	if (file.is_open()) {
+		if (pipeToSave.pipeName != "") {
+			SavePipe(pipeToSave, file);
+			file << "\n";
+		}
+		else std::cout << "Pipe data was not saved! (there is no created pipe)\n";
+		if (CSToSave.CSName != "")
+			SaveCS(CSToSave, file);
+		else std::cout << "CS data was not saved! (there is no created CS)\n";
+	}
+	else std::cout << "File cannot be open!\n";
 }
 
-void LoadPipe(Pipe& pipeToEdit) {
-	std::ifstream file("data.txt");
-	if (file.is_open()) {
-		std::getline(file >> std::ws, pipeToEdit.pipeName);
-		if (pipeToEdit.pipeName == "-") pipeToEdit.length = 0;
-		else {
-			file >> pipeToEdit.length;
-			file >> pipeToEdit.diameter;
-			file >> pipeToEdit.isRepairing;
-		}
-		file.close();
-	} else std::cout << "Error! File cannot be open!\n";
+void LoadPipe(Pipe& pipeToEdit, std::ifstream& file) {
+	std::getline(file >> std::ws, pipeToEdit.pipeName);
+	file >> pipeToEdit.length >> pipeToEdit.diameter >> pipeToEdit.isRepairing;
 }
 
-void LoadCS(CS& CSToEdit) {
-	std::ifstream file("data.txt");
-	if (file.is_open()) {
-		file.ignore(std::numeric_limits<std::streamsize>::max(), '-');
-		if (!std::getline(file >> std::ws, CSToEdit.CSName)) CSToEdit.workshopsQuantity = 0;
-		else {
-			file >> CSToEdit.workshopsQuantity >> CSToEdit.busyWorkshopsQuantity >>
-				CSToEdit.effectiveness;
-		}
-		file.close();
-	} else std::cout << "Error! File cannot be open!\n";
+void LoadCS(CS& CSToEdit, std::ifstream& file) {
+	file.ignore(std::numeric_limits<std::streamsize>::max(), NULL);
+	file >> CSToEdit.workshopsQuantity >> CSToEdit.busyWorkshopsQuantity >>
+		CSToEdit.effectiveness;
 }
 
 void Load(Pipe& pipeToEdit, CS& CSToEdit) {
-	LoadPipe(pipeToEdit);
-	LoadCS(CSToEdit);
+	std::ifstream file("data.txt");
+	if (file.is_open()) {
+		if (pipeToEdit.pipeName == "") pipeToEdit.length = 0;
+		else LoadPipe(pipeToEdit, file);
+		if (!std::getline(file >> std::ws, CSToEdit.CSName)) CSToEdit.workshopsQuantity = 0;
+		else LoadCS(CSToEdit, file);
+	}
+	else std::cout << "File cannot be open!\n";
 }
 
 int main() {
