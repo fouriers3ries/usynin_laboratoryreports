@@ -49,20 +49,20 @@ std::ostream& operator<< (std::ostream& out, const CS& CS) {
 };
 
 // function for printing errors according to its errorcode
-void ProcessError(std::istream& in, int errorcode) {
-	std::vector<std::string> errors { "Choose an option from the list!\n", "Error! Enter a positive integer!\n" ,
+void ProcessError(int errorcode) {
+	std::vector<std::string> errors{ "Choose an option from the list!\n", "Error! Enter a positive integer!\n" ,
 	"Error! Enter a positive number!\n", "Error! Choose 1 or 0!\n", "Error! Enter a number between 0.00 and 1.00\n",
 	"Error! Busy workshop quantity shouldn't be greater than total workshops quantity!\n" };
 	std::cout << errors[errorcode];
-	in.clear();
-	in.ignore(32767, '\n');
+	std::cin.clear();
+	std::cin.ignore(32767, '\n');
 }
 
 void EditPipe(Pipe& pipeToEdit) {
 	std::cout << "Enter pipe repairing status (1 - not in repairing, 0 - in repairing): \n";
 	std::cin >> pipeToEdit.isRepairing;
 	while (std::cin.fail()) {
-		ProcessError(std::cin, 3);
+		ProcessError(3);
 		std::cin >> pipeToEdit.isRepairing;
 	}
 }
@@ -71,7 +71,7 @@ void EditCS(CS& CSToEdit) {
 	std::cout << "Enter busy workshops quantity: \n";
 	std::cin >> CSToEdit.busyWorkshopsQuantity;
 	while (std::cin.fail() || CSToEdit.busyWorkshopsQuantity <= 0 || CSToEdit.busyWorkshopsQuantity > CSToEdit.workshopsQuantity) {
-		(CSToEdit.busyWorkshopsQuantity > CSToEdit.workshopsQuantity) ? ProcessError(std::cin, 5) : ProcessError(std::cin, 2);
+		(CSToEdit.busyWorkshopsQuantity > CSToEdit.workshopsQuantity) ? ProcessError(5) : ProcessError(2);
 		std::cin >> CSToEdit.busyWorkshopsQuantity;
 	}
 }
@@ -82,13 +82,13 @@ std::istream& operator>> (std::istream& in, Pipe& pipe) {
 	std::cout << "Enter pipe length (in metres): \n";
 	in >> pipe.length;
 	while (in.fail() || pipe.length <= 0) {
-		ProcessError(in, 1);
+		ProcessError(1);
 		in >> pipe.length;
 	}
 	std::cout << "Enter pipe diameter (in millimetres): \n";
 	in >> pipe.diameter;
 	while (in.fail() || pipe.diameter <= 0) {
-		ProcessError(in, 2);
+		ProcessError(2);
 		in >> pipe.diameter;
 	}
 	EditPipe(pipe);
@@ -102,14 +102,14 @@ std::istream& operator>> (std::istream& in, CS& CS) {
 	std::cout << "Enter workshops quantity: \n";
 	in >> CS.workshopsQuantity;
 	while (in.fail() || CS.workshopsQuantity <= 0) {
-		ProcessError(in, 1);
+		ProcessError(1);
 		in >> CS.workshopsQuantity;
 	}
 	EditCS(CS);
 	std::cout << "Enter workshops effectiveness (from 0.00 to 1.00): \n";
 	in >> CS.effectiveness;
 	while (in.fail() || CS.effectiveness <= 0 || CS.effectiveness > 1) {
-		ProcessError(in, 4);
+		ProcessError(4);
 		in >> CS.effectiveness;
 	}
 	return in;
@@ -122,22 +122,32 @@ void SavePipe(const Pipe& pipeToSave, std::ofstream& file) {
 
 void SaveCS(const CS& CSToSave, std::ofstream& file) {
 	file << CSToSave.CSName << '\n' << CSToSave.workshopsQuantity << '\n' <<
-			CSToSave.busyWorkshopsQuantity << '\n' << CSToSave.effectiveness;
+		CSToSave.busyWorkshopsQuantity << '\n' << CSToSave.effectiveness;
 }
 
 void Save(const Pipe& pipeToSave, const CS& CSToSave) {
 	std::ofstream file("data.txt");
 	if (file.is_open()) {
 		if (pipeToSave.pipeName != "") {
+			file << "1\n";
 			SavePipe(pipeToSave, file);
-			file << "\n";
 		}
-		else std::cout << "Pipe data was not saved! (there is no created pipe)\n";
-		if (CSToSave.CSName != "")
+		else {
+			std::cout << "Pipe data was not saved! (there's no created pipe)\n";
+			file << "0\n";
+		}
+		if (CSToSave.CSName != "") {
+			file << "1\n";
 			SaveCS(CSToSave, file);
-		else std::cout << "CS data was not saved! (there is no created CS)\n";
+		}
+		else {
+			std::cout << "CS data was not saved! (there's no created CS)\n";
+			file << "0\n";
+		}
+		file.close();
 	}
 	else std::cout << "File cannot be open!\n";
+
 }
 
 void LoadPipe(Pipe& pipeToEdit, std::ifstream& file) {
@@ -146,18 +156,23 @@ void LoadPipe(Pipe& pipeToEdit, std::ifstream& file) {
 }
 
 void LoadCS(CS& CSToEdit, std::ifstream& file) {
-	file.ignore(std::numeric_limits<std::streamsize>::max(), NULL);
+	std::getline(file >> std::ws, CSToEdit.CSName);
 	file >> CSToEdit.workshopsQuantity >> CSToEdit.busyWorkshopsQuantity >>
 		CSToEdit.effectiveness;
 }
 
 void Load(Pipe& pipeToEdit, CS& CSToEdit) {
 	std::ifstream file("data.txt");
+	int pipesQuantity = 0;
+	int CSQuantity = 0;
 	if (file.is_open()) {
-		if (pipeToEdit.pipeName == "") pipeToEdit.length = 0;
-		else LoadPipe(pipeToEdit, file);
-		if (!std::getline(file >> std::ws, CSToEdit.CSName)) CSToEdit.workshopsQuantity = 0;
-		else LoadCS(CSToEdit, file);
+		file >> pipesQuantity;
+		if (pipesQuantity) for (size_t i = 0; i < pipesQuantity; ++i) LoadPipe(pipeToEdit, file);
+		else pipeToEdit.length = 0;
+		file >> CSQuantity;
+		if (CSQuantity) for (size_t i = 0; i < CSQuantity; ++i) LoadCS(CSToEdit, file);
+		else CSToEdit.workshopsQuantity = 0;
+		file.close();
 	}
 	else std::cout << "File cannot be open!\n";
 }
@@ -169,8 +184,8 @@ int main() {
 	for (;;) {
 		ShowMenu();
 		std::cin >> userChoice;
-		while (!isUserChoiceCorrect(userChoice) || std::cin.fail()) {
-			ProcessError(std::cin, 0);
+		while (std::cin.fail() || !isUserChoiceCorrect(userChoice)) {
+			ProcessError(0);
 			std::cin >> userChoice;
 		}
 		switch (userChoice) {
@@ -203,6 +218,6 @@ int main() {
 		case 0:
 			return 0;
 		}
-		
+
 	}
 }
