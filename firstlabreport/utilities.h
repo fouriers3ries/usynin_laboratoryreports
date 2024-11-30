@@ -94,8 +94,8 @@ T GetCorrectInput(T min, T max) {
 	while ((std::cin >> value).fail() || value < min || value > max) {
 		std::cin.clear();
 		std::cin.ignore(32767, '\n');
-		std::cout << "\nfuck you. input must be a value between " << min << " and " << max << '\n';
-		std::cout << "enter your fucking value: ";
+		std::cout << "\nError. Input must be a value between " << min << " and " << max << '\n';
+		std::cout << "Try again: ";
 	}
 	return value;
 };
