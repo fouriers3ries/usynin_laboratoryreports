@@ -48,8 +48,8 @@ std::ostream& operator<< (std::ostream& out, const CS& CS) {
 };
 
 std::ofstream& operator<< (std::ofstream& fout, const CS& CS) {
-	fout << CS.CSName << '\n' << CS.workshopsQuantity << '\n' <<
-		CS.busyWorkshopsQuantity << '\n' << CS.effectiveness;
+	fout << CS.csID << '\n' << CS.CSName << '\n' << CS.workshopsQuantity << '\n' <<
+		CS.busyWorkshopsQuantity << '\n' << CS.effectiveness << '\n';
 	return fout;
 }
 

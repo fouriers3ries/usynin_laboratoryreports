@@ -47,7 +47,7 @@ std::ostream& operator<<(std::ostream& out, const Pipe& pipe) {
 }
 
 std::ofstream& operator<< (std::ofstream& fout, const Pipe& pipe) {
-	fout << pipe.pipeName << '\n' << pipe.length << '\n' <<
+	fout << pipe.pipeID << '\n' << pipe.pipeName << '\n' << pipe.length << '\n' <<
 		pipe.diameter << '\n' << pipe.isRepairing << '\n';
 	return fout;
 }

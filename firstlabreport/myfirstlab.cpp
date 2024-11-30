@@ -21,57 +21,41 @@ void ShowPurposeMenu() {
 	std::cout << "1. Edit\n" << "2. Delete\n" << "0. Back\n";
 }
 
-/*
-void Save(const Pipe& pipeToSave, const CS& CSToSave) {
-	std::ofstream file("data.txt");
-	if (file.is_open()) {
-		if (pipeToSave.pipeName != "") {
-			file << "1\n";
-			SavePipe(pipeToSave, file);
-		}
-		else {
-			std::cout << "Pipe data was not saved! (there's no created pipe)\n";
-			file << "0\n";
-		}
-		if (CSToSave.CSName != "") {
-			file << "1\n";
-			SaveCS(CSToSave, file);
-		}
-		else {
-			std::cout << "CS data was not saved! (there's no created CS)\n";
-			file << "0\n";
-		}
-		file.close();
+template<typename T>
+void SaveObject(std::ofstream& path, std::unordered_map<int, T>& objectPackage) {
+	for (auto& object : objectPackage) {
+		path << object.second;
 	}
-	else std::cout << "File cannot be open!\n";
-
 }
-*/
 
-/*
-void LoadPipe(Pipe& pipeToEdit, std::ifstream& file) {
-	std::getline(file >> std::ws, pipeToEdit.pipeName);
-	file >> pipeToEdit.length >> pipeToEdit.diameter >> pipeToEdit.isRepairing;
-}
-*/
-
-/*
-void Load(Pipe& pipeToEdit, CS& CSToEdit) {
-	std::ifstream file("data.txt");
-	int pipesQuantity = 0;
-	int CSQuantity = 0;
-	if (file.is_open()) {
-		file >> pipesQuantity;
-		if (pipesQuantity) for (size_t i = 0; i < pipesQuantity; ++i) LoadPipe(pipeToEdit, file);
-		else pipeToEdit.length = 0;
-		file >> CSQuantity;
-		if (CSQuantity) for (size_t i = 0; i < CSQuantity; ++i) LoadCS(CSToEdit, file);
-		else CSToEdit.workshopsQuantity = 0;
-		file.close();
+template<typename T>
+std::unordered_map<int, T> LoadObject(std::ifstream& inputFile, std::unordered_map<int, T>& objectPackage, int quantity) {
+	for (size_t i = 0; i < quantity; i++) {
+		T object;
+		inputFile >> object;
+		objectPackage.emplace(object.GetID(), object);
 	}
-	else std::cout << "File cannot be open!\n";
+	return objectPackage;
 }
-*/
+
+void Load(std::unordered_map<int, Pipe>& pipePackage, std::unordered_map<int, CS>& CSPackage) {
+	std::ifstream inputFile;
+	std::string path;
+
+	std::cout << "Enter file name: \n";
+	std::getline(std::cin >> std::ws, path);
+	inputFile.open(path);
+
+	if (inputFile.is_open()) {
+		int pipesQuantity, CSQuantity;
+		inputFile >> pipesQuantity;
+		LoadObject(inputFile, pipePackage, pipesQuantity);
+		inputFile >> CSQuantity;
+		LoadObject(inputFile, CSPackage, CSQuantity);
+		std::cout << "Data loaded successfully\n";
+	} else std::cout << "There're some problems during reading from file. Try again.\n";
+	inputFile.close();
+}
 
 int main() {
 	std::unordered_map<int, Pipe> pipePackage;
@@ -83,6 +67,7 @@ int main() {
 	int searchingPercentage{};
 	std::unordered_set<int> searchResult{};
 	int userChoice{};
+	std::string path{};
 
 	for (;;) {
 		ShowMenu();
@@ -182,9 +167,23 @@ int main() {
 			}
 			break;
 		}
-		case 5:
+		case 5: {
+			std::ofstream outputFile;
+			std::cout << "Enter file name: \n";
+			std::getline(std::cin >> std::ws, path);
+			outputFile.open(path + ".txt", std::ios::app);
+			if (outputFile.is_open()) {
+				outputFile << pipePackage.size() << '\n';
+				SaveObject(outputFile, pipePackage);
+				outputFile << CSPackage.size() << '\n';
+				SaveObject(outputFile, CSPackage);
+				std::cout << "Data writed to file successfully\n";
+			}
+			else std::cout << "Failed! Data cannot be written.";
+			outputFile.close();
+		}
 			break;
-		case 6:
+		case 6: Load(pipePackage, CSPackage);
 			break;
 		case 0:
 			return 0;
