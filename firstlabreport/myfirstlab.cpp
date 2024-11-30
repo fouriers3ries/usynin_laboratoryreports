@@ -5,6 +5,8 @@
 #include "CS.h"
 #include "utilities.h"
 #include <unordered_map>
+#include <chrono>
+#include <format>
 
 void ShowMenu() {
 	std::cout << "Second laboratory work report by Usynin Daniil (AS-23-04)\n\n" <<
@@ -61,6 +63,12 @@ int main() {
 	std::unordered_map<int, Pipe> pipePackage;
 	std::unordered_map<int, CS> CSPackage;
 	std::unordered_set<int> output;
+
+	redirect_output_wrapper cerr_out(std::cerr);
+	std::string time = std::format("{:%d_%m_%Y %H_%M_%OS}", std::chrono::system_clock::now());
+	std::ofstream logfile("log_" + time);
+	if (logfile)
+		cerr_out.redirect(logfile);
 
 	std::string searchingName{};
 	bool searchingStatus{};
