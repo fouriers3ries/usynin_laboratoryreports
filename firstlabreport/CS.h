@@ -18,7 +18,7 @@ public:
 
 	// get things
 	std::string GetName() const;
-	float GetAFK() const; // get percentages of unused workshops 
+	float GetAFK() const; // get percentage of unused workshops 
 	int GetID() const;
 
 	// change busy workshops quantity

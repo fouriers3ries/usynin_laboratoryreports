@@ -3,10 +3,9 @@
 #include <iostream>
 #include <fstream>
 
-
 int Pipe::maxID = 0;
 
-Pipe::Pipe() : pipeName(""), length(0.0f), diameter(0), isRepairing(false), pipeID(++maxID) {}
+Pipe::Pipe() : pipeName(""), length(0.0f), diameter(0), isRepairing(false), pipeID(maxID) {}
 
 std::string Pipe::GetName() const {
 	return pipeName;
@@ -40,7 +39,7 @@ std::istream& operator>>(std::istream& in, Pipe& pipe) {
 
 std::ostream& operator<<(std::ostream& out, const Pipe& pipe) {
 	out << "----- Pipe specs -----\n";
-	out << "ID: " << pipe.pipeID << "Name: " << pipe.pipeName << '\n' <<
+	out << "ID: " << pipe.pipeID << '\n' << "Name: " << pipe.pipeName << '\n' <<
 		"Length: " << pipe.length << " m." << '\n' <<
 		"Diameter: " << pipe.diameter << " mm." << '\n';
 	out << "Repairing status: " << (pipe.isRepairing ? "not in repairing\n\n" : "in repairing\n\n");

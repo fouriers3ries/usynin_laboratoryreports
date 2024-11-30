@@ -133,6 +133,7 @@
     <ClCompile Include="CS.cpp" />
     <ClCompile Include="myfirstlab.cpp" />
     <ClCompile Include="Pipe.cpp" />
+    <ClCompile Include="utilities.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CS.h" />

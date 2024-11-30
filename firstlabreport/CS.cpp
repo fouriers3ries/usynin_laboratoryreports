@@ -6,7 +6,7 @@
 
 int CS::maxID = 0;
 
-CS::CS() : CSName(""), workshopsQuantity(0), busyWorkshopsQuantity(0), effectiveness(0.0f), csID(++maxID) {}
+CS::CS() : CSName(""), workshopsQuantity(0), busyWorkshopsQuantity(0), effectiveness(0.0f), csID(maxID) {}
 
 std::string CS::GetName() const {
 	return CSName;
@@ -22,7 +22,7 @@ int CS::GetID() const {
 
 void CS::EditCS() {
 	std::cout << "Enter busy workshops quantity: \n";
-	GetCorrectInput(0, workshopsQuantity);
+	workshopsQuantity = GetCorrectInput(0, workshopsQuantity);
 }
 
 std::istream& operator>> (std::istream& in, CS& CS) {
@@ -32,7 +32,7 @@ std::istream& operator>> (std::istream& in, CS& CS) {
 	std::cout << "Enter workshops quantity: \n";
 	CS.workshopsQuantity = GetCorrectInput(1, 1000);
 	std::cout << "Enter busy workshops quantity: \n";
-	GetCorrectInput(0, CS.workshopsQuantity);
+	CS.busyWorkshopsQuantity = GetCorrectInput(0, CS.workshopsQuantity);
 	std::cout << "Enter workshops effectiveness (from 0.00 to 1.00): \n";
 	CS.effectiveness = GetCorrectInput(0.00, 1.00);
 	return in;
@@ -40,7 +40,7 @@ std::istream& operator>> (std::istream& in, CS& CS) {
 
 std::ostream& operator<< (std::ostream& out, const CS& CS) {
 	out << "----- CS specs -----\n";
-	out << "Name: " << CS.CSName << '\n' <<
+	out << "ID: " << CS.csID << '\n' << "Name: " << CS.CSName << '\n' <<
 		"Workshops quantity: " << CS.workshopsQuantity << '\n' <<
 		"Busy workshops quantity: " << CS.busyWorkshopsQuantity << '\n' <<
 		"Effectiveness: " << CS.effectiveness << '\n';
