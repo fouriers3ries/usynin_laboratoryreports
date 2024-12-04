@@ -6,6 +6,9 @@
 #include "Pipe.h"
 #include "CS.h"
 
+#define INPUT_LINE(in, string) std::getline(in >> std::ws, string); \
+						std::cerr << string << '\n';
+
 class redirect_output_wrapper
 {
 	std::ostream& stream;
@@ -97,6 +100,7 @@ T GetCorrectInput(T min, T max) {
 		std::cout << "\nError. Input must be a value between " << min << " and " << max << '\n';
 		std::cout << "Try again: ";
 	}
+	std::cerr << value << '\n';
 	return value;
 };
 

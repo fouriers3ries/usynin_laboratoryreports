@@ -59,25 +59,29 @@ void Load(std::unordered_map<int, Pipe>& pipePackage, std::unordered_map<int, CS
 	inputFile.close();
 }
 
-int main() {
+void Save(std::unordered_map<int, Pipe>& pipePackage, std::unordered_map<int, CS> CSPackage) {
+	std::string path{};
+	std::ofstream outputFile{};
+	std::cout << "Enter file name: \n";
+	INPUT_LINE(std::cin, path);
+	outputFile.open(path + ".txt", std::ios::app);
+	if (outputFile.is_open()) {
+		outputFile << pipePackage.size() << '\n';
+		SaveObject(outputFile, pipePackage);
+		outputFile << CSPackage.size() << '\n';
+		SaveObject(outputFile, CSPackage);
+		std::cout << "Data writed to file successfully\n";
+	}
+	else std::cout << "Failed! Data cannot be written.";
+	outputFile.close();
+}
+
+void MainMenu() {
 	std::unordered_map<int, Pipe> pipePackage;
 	std::unordered_map<int, CS> CSPackage;
 	std::unordered_set<int> output;
 
-	redirect_output_wrapper cerr_out(std::cerr);
-	std::string time = std::format("{:%d_%m_%Y %H_%M_%OS}", std::chrono::system_clock::now());
-	std::ofstream logfile("log_" + time);
-	if (logfile)
-		cerr_out.redirect(logfile);
-
-	std::string searchingName{};
-	bool searchingStatus{};
-	int searchingPercentage{};
-	std::unordered_set<int> searchResult{};
-	int userChoice{};
-	std::string path{};
-
-	for (;;) {
+	while(1) {
 		ShowMenu();
 		switch (GetCorrectInput(0, 6)) {
 		case 1: {
@@ -107,28 +111,30 @@ int main() {
 				case 1:
 					if (pipePackage.empty()) std::cout << "There's no added pipes\n";
 					else {
+						std::string searchingName{};
 						std::cout << "Enter name for searching: \n";
-						std::getline(std::cin >> std::ws, searchingName);
-						searchResult = FindPipeByFilter(pipePackage, CheckPipeByName, searchingName);
+						INPUT_LINE(std::cin, searchingName);
+						auto searchResult = FindPipeByFilter(pipePackage, CheckPipeByName, searchingName);
 						if (!searchResult.empty()) {
-							ShowPurposeMenu(); // check if users want to edit or delete those pipes
-							userChoice = GetCorrectInput(0, 2);
+							ShowPurposeMenu();
+							int userChoice = GetCorrectInput(0, 2);
 							if (userChoice == 1) PipePackageEdit(pipePackage, searchResult);
 							if (userChoice == 2) ObjectPackageDelete(pipePackage, searchResult);
 							if (userChoice == 0) break;
 						}
-						else std::cout << "There's no pipes with that name!" << '\n';
+						else std::cout << "There's no pipes with that repairing status!" << '\n';
 					}
 					break;
 				case 2:
 					if (pipePackage.empty()) std::cout << "There's no added pipes\n";
 					else {
+						bool searchingStatus{};
 						std::cout << "Enter pipe repairing status for searching (1 - not in repairing, 0 - in repairing): \n";
 						searchingStatus = GetCorrectInput(0, 1);
-						searchResult = FindPipeByFilter(pipePackage, CheckPipeByStatus, searchingStatus);
+						auto searchResult = FindPipeByFilter(pipePackage, CheckPipeByStatus, searchingStatus);
 						if (!searchResult.empty()) {
 							ShowPurposeMenu();
-							userChoice = GetCorrectInput(0, 2);
+							int userChoice = GetCorrectInput(0, 2);
 							if (userChoice == 1) PipePackageEdit(pipePackage, searchResult);
 							if (userChoice == 2) ObjectPackageDelete(pipePackage, searchResult);
 							if (userChoice == 0) break;
@@ -139,12 +145,13 @@ int main() {
 				case 3:
 					if (CSPackage.empty()) std::cout << "There's no added CS's\n";
 					else {
+						std::string searchingName{};
 						std::cout << "Enter name for searching: \n";
-						std::getline(std::cin >> std::ws, searchingName);
-						searchResult = FindCSByFilter(CSPackage, CheckCSByName, searchingName);
+						INPUT_LINE(std::cin, searchingName);
+						auto searchResult = FindCSByFilter(CSPackage, CheckCSByName, searchingName);
 						if (!searchResult.empty()) {
 							ShowPurposeMenu();
-							userChoice = GetCorrectInput(0, 2);
+							int userChoice = GetCorrectInput(0, 2);
 							if (userChoice == 1) CSPackageEdit(CSPackage, searchResult);
 							if (userChoice == 2) ObjectPackageDelete(CSPackage, searchResult);
 							if (userChoice == 0) break;
@@ -155,12 +162,13 @@ int main() {
 				case 4:
 					if (CSPackage.empty()) std::cout << "There's no added CS's\n";
 					else {
+						int searchingPercentage{};
 						std::cout << "Enter disability percentage for searching: \n";
 						searchingPercentage = GetCorrectInput(0, 100);
-						searchResult = FindCSByFilter(CSPackage, CheckCSByAFK, searchingPercentage);
+						auto searchResult = FindCSByFilter(CSPackage, CheckCSByAFK, searchingPercentage);
 						if (!searchResult.empty()) {
 							ShowPurposeMenu();
-							userChoice = GetCorrectInput(0, 2);
+							int userChoice = GetCorrectInput(0, 2);
 							if (userChoice == 1) CSPackageEdit(CSPackage, searchResult);
 							if (userChoice == 2) ObjectPackageDelete(CSPackage, searchResult);
 							if (userChoice == 0) break;
@@ -176,26 +184,25 @@ int main() {
 			break;
 		}
 		case 5: {
-			std::ofstream outputFile;
-			std::cout << "Enter file name: \n";
-			std::getline(std::cin >> std::ws, path);
-			outputFile.open(path + ".txt", std::ios::app);
-			if (outputFile.is_open()) {
-				outputFile << pipePackage.size() << '\n';
-				SaveObject(outputFile, pipePackage);
-				outputFile << CSPackage.size() << '\n';
-				SaveObject(outputFile, CSPackage);
-				std::cout << "Data writed to file successfully\n";
-			}
-			else std::cout << "Failed! Data cannot be written.";
-			outputFile.close();
+			Save(pipePackage, CSPackage);
 		}
-			break;
+			  break;
 		case 6: Load(pipePackage, CSPackage);
 			break;
 		case 0:
-			return 0;
+			return;
 		}
-
 	}
+}
+
+int main() {
+
+	redirect_output_wrapper cerr_out(std::cerr);
+	std::string time = std::format("{:%d_%m_%Y %H_%M_%OS}", std::chrono::system_clock::now());
+	std::ofstream logfile("log_" + time + ".txt");
+	if (logfile)
+		cerr_out.redirect(logfile);
+
+	MainMenu();
+
 }
