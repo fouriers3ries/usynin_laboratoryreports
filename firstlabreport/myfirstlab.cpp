@@ -97,10 +97,16 @@ void MainMenu() {
 			break;
 		}
 		case 3: {
-			if (pipePackage.empty()) std::cout << "There's no added pipes!\n";
-			else for (const auto& pipe : pipePackage) std::cout << pipe.second << '\n';
-			if (CSPackage.empty()) std::cout << "There's no added CS's!\n";
-			else for (const auto& CS : CSPackage) std::cout << CS.second << '\n';
+			if (pipePackage.empty()) 
+				std::cout << "There's no added pipes!\n";
+			else 
+				for (const auto& pipe : pipePackage) 
+					std::cout << pipe.second << '\n';
+			if (CSPackage.empty()) 
+				std::cout << "There's no added CS's!\n";
+			else 
+				for (const auto& CS : CSPackage) 
+					std::cout << CS.second << '\n';
 			break;
 		}
 		case 4: {
