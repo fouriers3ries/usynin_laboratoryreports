@@ -6,7 +6,7 @@
 #include "utilities.h"
 #include <unordered_map>
 #include <chrono>
-// #include <format>
+#include <format>
 
 void ShowMenu() {
 	std::cout << "Second laboratory work report by Usynin Daniil (AS-23-04)\n\n" <<
@@ -313,7 +313,7 @@ void MainMenu() {
 int main() {
 
 	redirect_output_wrapper cerr_out(std::cerr);
-	std::string time = "ddsaf";
+	std::string time = std::format("{:%d_%m_%Y %H_%M_%OS}", system_clock::now());
 	std::ofstream logfile("log_" + time + ".txt");
 	if (logfile)
 		cerr_out.redirect(logfile);
