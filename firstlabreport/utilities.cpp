@@ -6,7 +6,7 @@
 #include "CS.h"
 
 bool CheckPipeByName(const Pipe& pipeToCheck, const std::string arg) {
-	return pipeToCheck.GetName() == arg;
+	return pipeToCheck.GetName().find(arg) != std::string::npos;
 }
 
 bool CheckPipeByStatus(const Pipe& pipeToCheck, bool arg) {
@@ -14,7 +14,7 @@ bool CheckPipeByStatus(const Pipe& pipeToCheck, bool arg) {
 }
 
 bool CheckCSByName(const CS& CSToCheck, const std::string arg) {
-	return CSToCheck.GetName() == arg;
+	return CSToCheck.GetName().find(arg) != std::string::npos;
 }
 
 bool CheckCSByAFK(const CS& CSToCheck, int arg) {
