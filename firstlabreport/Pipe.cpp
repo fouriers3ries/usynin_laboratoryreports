@@ -23,6 +23,10 @@ void Pipe::EditPipe() {
 	isRepairing = !isRepairing;
 }
 
+int Pipe::GetDiameter() const {
+	return diameter;
+}
+
 std::istream& operator>>(std::istream& in, Pipe& pipe) {
 
 	pipe.pipeID = ++pipe.maxID;
@@ -31,7 +35,7 @@ std::istream& operator>>(std::istream& in, Pipe& pipe) {
 	std::cout << "Enter pipe length (in metres): \n";
 	pipe.length = GetCorrectInput(5.0, 12.0);
 	std::cout << "Enter pipe diameter: (in millimetres): \n";
-	pipe.diameter = GetCorrectInput(500, 1420);
+	pipe.diameter = GetCorrectInput(100, 2000);
 	std::cout << "Enter pipe repairing status (1 - not in repairing, 0 - in repairing): \n";
 	pipe.isRepairing = GetCorrectInput(0, 1);
 	return in;

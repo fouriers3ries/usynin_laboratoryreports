@@ -1,4 +1,4 @@
-#include <iostream>
+﻿#include <iostream>
 #include <fstream>
 #include <string>
 #include "Pipe.h"
@@ -6,12 +6,14 @@
 #include "utilities.h"
 #include <unordered_map>
 #include <chrono>
-// #include <format>
+#include <format>
+#include "GTN.h"
 
 void ShowMenu() {
-	std::cout << "Second laboratory work report by Usynin Daniil (AS-23-04)\n\n" <<
+	std::cout << "Third laboratory work report by Usynin Daniil (AS-23-04)\n\n" <<
 		"Choose an option to do:\n" << "1. Add pipe\n" << "2. Add CS\n" <<
-		"3. Show all objects\n" << "4. Search for object\n" << "5. Save\n" << "6. Load\n" << "0. Exit\n\n";
+		"3. Show all objects\n" << "4. Search for object\n" << "5. Connect pipe and CS in GTN\n" << 
+		"6. Show GTN\n" << "7. Delete GTN\n" << "8. Topological sorting\n" << "9. Save\n" << "10. Load\n" << "0. Exit\n\n";
 };
 
 void ShowSearchMenu() {
@@ -225,8 +227,10 @@ void SearchCSByStatus(std::unordered_map<int, CS>& CSPackage) {
 }
 
 void MainMenu() {
-	std::unordered_map<int, Pipe> pipePackage;
-	std::unordered_map<int, CS> CSPackage;
+
+	GTN network;
+	std::unordered_map<int, Pipe> pipePackage = network.GetPipePackage();
+	std::unordered_map<int, CS> CSPackage = network.GetCSPackage();
 	std::unordered_set<int> output;
 
 	while(1) {
@@ -272,9 +276,42 @@ void MainMenu() {
 			}
 			break;
 		}
-		case 5: Save(pipePackage, CSPackage);
+		case 5: {
+			// Соединение КС и трубы в газотранспортную сеть
+			if (CSPackage.empty() || pipePackage.empty()) {
+				std::cout << "No pipes or compressor stations added yet.\n";
+			}
+			else {
+				int startCSID, endCSID, diameter;
+				std::cout << "Enter start CS ID: ";
+				startCSID = GetCorrectInput(0, INT_MAX);
+				std::cout << "Enter end CS ID: ";
+				endCSID = GetCorrectInput(0, INT_MAX);
+				std::cout << "Enter pipe diameter (500, 700, 1000, or 1400 mm): ";
+				diameter = GetCorrectInput(500, 1400);
+
+				if (CSPackage.find(startCSID) == CSPackage.end() || CSPackage.find(endCSID) == CSPackage.end()) {
+					std::cout << "Invalid CS IDs provided.\n";
+				}
+				else {
+					// Добавление соединения в граф
+					bool success = network.ConnectCS(startCSID, endCSID, diameter);
+					if (!success) {
+						std::cout << "Failed to connect the stations.\n";
+					}
+				}
+			}
 			break;
-		case 6: Load(pipePackage, CSPackage);
+		}
+		case 6: {
+
+			// Показать текущую газотранспортную сеть
+			network.DisplayNetwork();
+			break;
+		}
+		case 9: Save(pipePackage, CSPackage);
+			break;
+		case 10: Load(pipePackage, CSPackage);
 			break;
 		case 0:
 			return;
@@ -285,7 +322,7 @@ void MainMenu() {
 int main() {
 
 	redirect_output_wrapper cerr_out(std::cerr);
-	std::string time = "fdsfdsf";
+	std::string time = std::format("{:%d_%m_%Y %H_%M_%OS}", std::chrono::system_clock::now());
 	std::ofstream logfile("log_" + time + ".txt");
 	if (logfile)
 		cerr_out.redirect(logfile);

@@ -21,8 +21,8 @@ public:
 	std::string GetName() const;
 	bool GetRepairingStatus() const;
 	int GetID() const;
+	int GetDiameter() const;
 
-	// change repairing status
 	void EditPipe();
 
 	friend std::ifstream& operator>> (std::ifstream& fin, Pipe& pipe);

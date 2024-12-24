@@ -32,6 +32,9 @@ bool CheckPipeByStatus(const Pipe& pipeToCheck, bool arg);
 bool CheckCSByName(const CS& CSToCheck, const std::string arg);
 bool CheckCSByAFK(const CS& CSToCheck, int arg);
 
+void PipePackageEdit(std::unordered_map<int, Pipe>& pipePackage, std::unordered_set<int> res);
+void CSPackageEdit(std::unordered_map<int, CS>& CSPackage, std::unordered_set <int>& res);
+
 template<typename T>
 using PipeFilter = bool(*)(const Pipe& pipePackage, T arg);
 
@@ -61,9 +64,6 @@ std::unordered_set<int> FindCSByFilter(const std::unordered_map<int, CS>& CSPack
 	}
 	return output;
 }
-
-void PipePackageEdit(std::unordered_map<int, Pipe>& pipePackage, std::unordered_set<int> res);
-void CSPackageEdit(std::unordered_map<int, CS>& CSPackage, std::unordered_set <int>& res);
 
 template<typename T>
 void ObjectPackageDelete(std::unordered_map<int, T>& objectPackage, std::unordered_set<int> res) {
