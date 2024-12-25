@@ -12,7 +12,7 @@
 void ShowMenu() {
 	std::cout << "Third laboratory work report by Usynin Daniil (AS-23-04)\n\n" <<
 		"Choose an option to do:\n" << "1. Add pipe\n" << "2. Add CS\n" <<
-		"3. Show all objects\n" << "4. Search for object\n" << "5. Connect pipe and CS in GTN\n" << 
+		"3. Show all objects\n" << "4. Search for object\n" << "5. Connect pipe and CS in GTN\n" <<
 		"6. Show GTN\n" << "7. Delete GTN\n" << "8. Topological sorting\n" << "9. Save\n" << "10. Load\n" << "0. Exit\n\n";
 };
 
@@ -36,6 +36,30 @@ void SaveObject(std::ofstream& path, std::unordered_map<int, T>& objectPackage) 
 	}
 }
 
+void SaveGraph(std::ofstream& path, std::unordered_map<int, std::unordered_map<int, int>>& graph) {
+	for (const auto& [startCSID, edges] : graph) {
+		for (const auto& [endCSID, pipeID] : edges) {
+			path << startCSID << " " << endCSID << " " << pipeID << "\n";
+		}
+	}
+}
+
+void LoadGraph(std::ifstream& path, std::unordered_map<int, std::unordered_map<int, int>>& graph, std::unordered_map<int, Pipe>& pipePackage, std::unordered_map<int, CS>& CSPackage) {
+	graph.clear();
+	int startCSID, endCSID, pipeID;
+	while (path >> startCSID >> endCSID >> pipeID) {
+		if (CSPackage.find(startCSID) != CSPackage.end() &&
+			CSPackage.find(endCSID) != CSPackage.end() &&
+			pipePackage.find(pipeID) != pipePackage.end()) {
+			graph[startCSID][endCSID] = pipeID; 
+		}
+		else {
+			std::cerr << "Warning: Invalid data found in file (CS or Pipe not found). Skipping: "
+				<< startCSID << " " << endCSID << " " << pipeID << "\n";
+		}
+	}
+}
+
 template<typename T>
 std::unordered_map<int, T> LoadObject(std::ifstream& inputFile, std::unordered_map<int, T>& objectPackage, int quantity) {
 	for (size_t i = 0; i < quantity; i++) {
@@ -46,7 +70,7 @@ std::unordered_map<int, T> LoadObject(std::ifstream& inputFile, std::unordered_m
 	return objectPackage;
 }
 
-void Load(std::unordered_map<int, Pipe>& pipePackage, std::unordered_map<int, CS>& CSPackage) {
+void Load(std::unordered_map<int, Pipe>& pipePackage, std::unordered_map<int, CS>& CSPackage, std::unordered_map<int, std::unordered_map<int, int>>& graph) {
 	std::ifstream inputFile;
 	std::string path;
 
@@ -60,12 +84,14 @@ void Load(std::unordered_map<int, Pipe>& pipePackage, std::unordered_map<int, CS
 		LoadObject(inputFile, pipePackage, pipesQuantity);
 		inputFile >> CSQuantity;
 		LoadObject(inputFile, CSPackage, CSQuantity);
+		LoadGraph(inputFile, graph, pipePackage, CSPackage);
 		std::cout << "Data loaded successfully\n";
-	} else std::cout << "There're some problems during reading from file. Try again.\n";
+	}
+	else std::cout << "There're some problems during reading from file. Try again.\n";
 	inputFile.close();
 }
 
-void Save(std::unordered_map<int, Pipe>& pipePackage, std::unordered_map<int, CS> CSPackage) {
+void Save(std::unordered_map<int, Pipe>& pipePackage, std::unordered_map<int, CS>& CSPackage, std::unordered_map<int, std::unordered_map<int, int>>& graph) {
 	std::string path{};
 	std::ofstream outputFile{};
 	std::cout << "Enter file name: \n";
@@ -76,6 +102,7 @@ void Save(std::unordered_map<int, Pipe>& pipePackage, std::unordered_map<int, CS
 		SaveObject(outputFile, pipePackage);
 		outputFile << CSPackage.size() << '\n';
 		SaveObject(outputFile, CSPackage);
+		SaveGraph(outputFile, graph);
 		std::cout << "Data writed to file successfully\n";
 	}
 	else std::cout << "Failed! Data cannot be written.";
@@ -103,8 +130,8 @@ void EditCSByChoice(std::unordered_map<int, CS>& CSPackage, std::unordered_set<i
 }
 
 template<typename T>
-void DeleteObjectsByChoice(std::unordered_map<int, T>& objectPackage, std::unordered_set<int>& searchResult, int userChoice) {
-	if (userChoice == 1) ObjectPackageDelete(objectPackage, searchResult);
+void DeleteObjectsByChoice(std::unordered_map<int, T>& objectPackage, std::unordered_set<int>& searchResult, int userChoice, std::unordered_map<int, std::unordered_map<int, int>>& graph, bool isPipe = false) {
+	if (userChoice == 1) ObjectPackageDelete(objectPackage, searchResult, graph, isPipe);
 	if (userChoice == 2) {
 		for (int ID : searchResult) {
 			auto obj = objectPackage.find(ID);
@@ -128,13 +155,13 @@ void ShowObjects(std::unordered_map<int, Pipe>& pipePackage, std::unordered_map<
 }
 
 template<typename T>
-void AddObject(std::unordered_map<int, T> objectPackage) {
+void AddObject(std::unordered_map<int, T>& objectPackage) {
 	T objToAdd;
 	std::cin >> objToAdd;
 	objectPackage.emplace(objToAdd.GetID(), objToAdd);
 }
 
-void SearchPipesByName(std::unordered_map<int, Pipe>& pipePackage) {
+void SearchPipesByName(std::unordered_map<int, Pipe>& pipePackage, std::unordered_map<int, std::unordered_map<int, int>>& graph) {
 	std::string searchingName{};
 	std::cout << "Enter name for searching: \n";
 	INPUT_LINE(std::cin, searchingName);
@@ -151,13 +178,13 @@ void SearchPipesByName(std::unordered_map<int, Pipe>& pipePackage) {
 		if (userChoice == 2) {
 			ShowQuantityMenu();
 			int userChoiceForQuantity = GetCorrectInput(0, 2);
-			DeleteObjectsByChoice(pipePackage, searchResult, userChoiceForQuantity);
+			DeleteObjectsByChoice(pipePackage, searchResult, userChoiceForQuantity, graph, true);
 		}
 	}
 	else std::cout << "There's no pipes with that name!" << '\n';
 }
 
-void SearchPipesByStatus(std::unordered_map<int, Pipe>& pipePackage) {
+void SearchPipesByStatus(std::unordered_map<int, Pipe>& pipePackage, std::unordered_map<int, std::unordered_map<int, int>>& graph) {
 	bool searchingStatus{};
 	std::cout << "Enter pipe repairing status for searching (1 - not in repairing, 0 - in repairing): \n";
 	searchingStatus = GetCorrectInput(0, 1);
@@ -174,13 +201,13 @@ void SearchPipesByStatus(std::unordered_map<int, Pipe>& pipePackage) {
 		if (userChoice == 2) {
 			ShowQuantityMenu();
 			int userChoiceForQuantity = GetCorrectInput(0, 2);
-			DeleteObjectsByChoice(pipePackage, searchResult, userChoiceForQuantity);
+			DeleteObjectsByChoice(pipePackage, searchResult, userChoiceForQuantity, graph, true);
 		}
 	}
 	else std::cout << "There's no pipes with that status!\n";
 }
 
-void SearchCSByName(std::unordered_map<int, CS>& CSPackage) {
+void SearchCSByName(std::unordered_map<int, CS>& CSPackage, std::unordered_map<int, std::unordered_map<int, int>>& graph) {
 	std::string searchingName{};
 	std::cout << "Enter name for searching: \n";
 	INPUT_LINE(std::cin, searchingName);
@@ -197,13 +224,13 @@ void SearchCSByName(std::unordered_map<int, CS>& CSPackage) {
 		if (userChoice == 2) {
 			ShowQuantityMenu();
 			int userChoiceForQuantity = GetCorrectInput(0, 2);
-			DeleteObjectsByChoice(CSPackage, searchResult, userChoiceForQuantity);
+			DeleteObjectsByChoice(CSPackage, searchResult, userChoiceForQuantity, graph);
 		}
 	}
 	else std::cout << "There's no CS's with that name!\n";
 }
 
-void SearchCSByStatus(std::unordered_map<int, CS>& CSPackage) {
+void SearchCSByStatus(std::unordered_map<int, CS>& CSPackage, std::unordered_map<int, std::unordered_map<int, int>>& graph) {
 	int searchingPercentage{};
 	std::cout << "Enter disability percentage for searching: \n";
 	searchingPercentage = GetCorrectInput(0, 100);
@@ -220,98 +247,106 @@ void SearchCSByStatus(std::unordered_map<int, CS>& CSPackage) {
 		if (userChoice == 2) {
 			ShowQuantityMenu();
 			int userChoiceForQuantity = GetCorrectInput(0, 2);
-			DeleteObjectsByChoice(CSPackage, searchResult, userChoiceForQuantity);
+			DeleteObjectsByChoice(CSPackage, searchResult, userChoiceForQuantity, graph);
 		}
 	}
 	else std::cout << "There's no CS's with that disability percentage!\n";
 }
 
 void MainMenu() {
-
 	GTN network;
-	std::unordered_map<int, Pipe> pipePackage = network.GetPipePackage();
-	std::unordered_map<int, CS> CSPackage = network.GetCSPackage();
 	std::unordered_set<int> output;
 
-	while(1) {
+	while (true) {
 		ShowMenu();
-		switch (GetCorrectInput(0, 6)) {
+		switch (GetCorrectInput(0, 10)) {
 		case 1: {
-			AddObject(pipePackage);
+			AddObject(network.GetPipePackage());
 			break;
 		}
 		case 2: {
-			AddObject(CSPackage);
+			AddObject(network.GetCSPackage());
 			break;
 		}
 		case 3: {
-			ShowObjects(pipePackage, CSPackage);
+			ShowObjects(network.GetPipePackage(), network.GetCSPackage());
 			break;
 		}
 		case 4: {
-			bool exitSearchMenu{ false };
+			bool exitSearchMenu = false;
 			while (!exitSearchMenu) {
 				ShowSearchMenu();
 				switch (GetCorrectInput(0, 4)) {
 				case 1:
-					if (pipePackage.empty()) std::cout << "There's no added pipes\n";
-					else SearchPipesByName(pipePackage);
+					if (network.GetPipePackage().empty())
+						std::cout << "There's no added pipes\n";
+					else
+						SearchPipesByName(network.GetPipePackage(), network.getGraphMat());
 					break;
 				case 2:
-					if (pipePackage.empty()) std::cout << "There's no added pipes\n";
-					else SearchPipesByStatus(pipePackage);
+					if (network.GetPipePackage().empty())
+						std::cout << "There's no added pipes\n";
+					else
+						SearchPipesByStatus(network.GetPipePackage(), network.getGraphMat());
 					break;
 				case 3:
-					if (CSPackage.empty()) std::cout << "There's no added CS's\n";
-					else SearchCSByName(CSPackage);
+					if (network.GetCSPackage().empty())
+						std::cout << "There's no added CS's\n";
+					else
+						SearchCSByName(network.GetCSPackage(), network.getGraphMat());
 					break;
 				case 4:
-					if (CSPackage.empty()) std::cout << "There's no added CS's\n";
-					else SearchCSByStatus(CSPackage);
+					if (network.GetCSPackage().empty())
+						std::cout << "There's no added CS's\n";
+					else
+						SearchCSByStatus(network.GetCSPackage(), network.getGraphMat());
 					break;
 				case 0:
-					exitSearchMenu = !exitSearchMenu;
+					exitSearchMenu = true;
 					break;
 				}
 			}
 			break;
 		}
 		case 5: {
-			// Соединение КС и трубы в газотранспортную сеть
-			if (CSPackage.empty() || pipePackage.empty()) {
-				std::cout << "No pipes or compressor stations added yet.\n";
-			}
-			else {
-				int startCSID, endCSID, diameter;
-				std::cout << "Enter start CS ID: ";
-				startCSID = GetCorrectInput(0, INT_MAX);
-				std::cout << "Enter end CS ID: ";
-				endCSID = GetCorrectInput(0, INT_MAX);
-				std::cout << "Enter pipe diameter (500, 700, 1000, or 1400 mm): ";
-				diameter = GetCorrectInput(500, 1400);
-
-				if (CSPackage.find(startCSID) == CSPackage.end() || CSPackage.find(endCSID) == CSPackage.end()) {
-					std::cout << "Invalid CS IDs provided.\n";
-				}
-				else {
-					// Добавление соединения в граф
-					bool success = network.ConnectCS(startCSID, endCSID, diameter);
-					if (!success) {
-						std::cout << "Failed to connect the stations.\n";
-					}
-				}
+			int startCSID, endCSID, diameter;
+			std::cout << "Enter start CS ID: \n";
+			startCSID = GetCorrectInput(0, INT_MAX);
+			std::cout << "Enter end CS ID: \n";
+			endCSID = GetCorrectInput(0, INT_MAX);
+			std::cout << "Enter diameter: \n";
+			std::cin >> diameter;
+			if (!network.ConnectCS(startCSID, endCSID, diameter)) {
+				std::cout << "Failed to establish connection.\n";
 			}
 			break;
 		}
 		case 6: {
-
-			// Показать текущую газотранспортную сеть
-			network.DisplayNetwork();
+			if (network.getGraphMat().empty())
+				std::cout << "There's no added networks!\n";
+			else
+				network.DisplayNetwork();
 			break;
 		}
-		case 9: Save(pipePackage, CSPackage);
+		case 7: {
+			network.DeleteGTN();
+			std::cout << "Network was successfully deleted\n";
 			break;
-		case 10: Load(pipePackage, CSPackage);
+		}
+		case 8: {
+			if (network.GetPipePackage().empty() || network.GetCSPackage().empty()) {
+				std::cout << "There's nothing to sort!\n";
+			}
+			else {
+				network.TopologicalSort();
+			}
+			break;
+		}
+		case 9:
+			Save(network.GetPipePackage(), network.GetCSPackage(), network.getGraphMat());
+			break;
+		case 10:
+			Load(network.GetPipePackage(), network.GetCSPackage(), network.getGraphMat());
 			break;
 		case 0:
 			return;

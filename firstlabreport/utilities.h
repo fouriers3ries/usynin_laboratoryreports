@@ -1,10 +1,11 @@
-#pragma once
+﻿#pragma once
 #include <iostream>
 #include <sstream>
 #include <unordered_map>
 #include <unordered_set>
 #include "Pipe.h"
 #include "CS.h"
+#include <algorithm>
 
 #define INPUT_LINE(in, string) std::getline(in >> std::ws, string); \
 						std::cerr << string << '\n';
@@ -66,29 +67,86 @@ std::unordered_set<int> FindCSByFilter(const std::unordered_map<int, CS>& CSPack
 }
 
 template<typename T>
-void ObjectPackageDelete(std::unordered_map<int, T>& objectPackage, std::unordered_set<int> res) {
-	std::string IDPackage;
-	std::cout << "Enter ID's of those objects you wanna delete: \n";
-	std::getline(std::cin >> std::ws, IDPackage);
-	std::istringstream IDStream(IDPackage); // package of ID's -> stringstream object to parse those ID's
-	std::unordered_set<int> IDs;
-	int ID;
+void ObjectPackageDelete(std::unordered_map<int, T>& objectPackage,
+    std::unordered_set<int> res,
+    std::unordered_map<int, std::unordered_map<int, int>>& graph,
+    bool isPipe = false) {
+    std::string IDPackage;
+    std::cout << "Enter IDs of the objects you want to delete: \n";
+    std::getline(std::cin >> std::ws, IDPackage);
+    std::istringstream IDStream(IDPackage); // package of IDs -> stringstream object to parse those IDs
+    std::unordered_set<int> IDs;
+    int ID;
 
-	while (IDStream >> ID) {
-		IDs.emplace(ID);
-	}
+    while (IDStream >> ID) {
+        IDs.emplace(ID);
+    }
 
-	for (int ID : IDs) {
-		auto obj = objectPackage.find(ID);
-		if (res.find(ID) == res.end()) {
-			std::cout << "There's no object with ID: " << ID << '\n';
-			continue;
-		} if (obj != objectPackage.end()) {
-			objectPackage.erase(obj);
-			std::cout << "Object with ID " << ID << " was successfully deleted\n";
-		}
-	}
+    for (int ID : IDs) {
+        auto obj = objectPackage.find(ID);
 
+        if (res.find(ID) == res.end()) {
+            std::cout << "There's no object with ID: " << ID << '\n';
+            continue;
+        }
+
+        bool inGraph = false;
+
+        if (isPipe) {
+            for (const auto& [startCSID, edges] : graph) {
+                if (std::any_of(edges.begin(), edges.end(), [&](const auto& edge) { return edge.second == ID; })) {
+                    inGraph = true;
+                    break;
+                }
+            }
+        }
+        else {
+            if (graph.find(ID) != graph.end()) {
+                inGraph = true;
+            }
+            for (const auto& [startCSID, edges] : graph) {
+                if (edges.find(ID) != edges.end()) {
+                    inGraph = true;
+                    break;
+                }
+            }
+        }
+
+        if (inGraph) {
+            std::cout << "Object with ID " << ID << " is used in the graph. Are you sure you want to delete it? (yes/no): ";
+            std::string userResponse;
+            std::cin >> userResponse;
+            if (userResponse != "yes") {
+                std::cout << "Object with ID " << ID << " was not deleted.\n";
+                continue;
+            }
+        }
+
+        if (isPipe) {
+            for (auto& [startCSID, edges] : graph) {
+                for (auto it = edges.begin(); it != edges.end();) {
+                    if (it->second == ID) {
+                        it = edges.erase(it);
+                    }
+                    else {
+                        ++it;
+                    }
+                }
+            }
+        }
+
+        else {
+            graph.erase(ID);
+            for (auto& [startCSID, edges] : graph) {
+                edges.erase(ID);
+            }
+        }
+
+        if (obj != objectPackage.end()) {
+            objectPackage.erase(obj);
+            std::cout << "Object with ID " << ID << " was successfully deleted.\n";
+        }
+    }
 }
 
 template <typename T>

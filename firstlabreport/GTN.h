@@ -7,34 +7,28 @@
 
 class GTN {
 private:
-    std::unordered_map<int, Pipe> pipePackage; // Трубы
-    std::unordered_map<int, CS> CSPackage; // КС
-    std::unordered_map<int, std::unordered_map<int, int>> graph; // Динамическая структура графа (диаметр трубы между КС)
-
-    // Вспомогательная функция для поиска или создания трубы
-    int FindOrCreatePipe(int diameter);
+    std::unordered_map<int, Pipe> pipePackage;
+    std::unordered_map<int, CS> CSPackage;
+    std::unordered_map<int, std::unordered_map<int, int>> graph;
+    std::vector<int> suitableDiameters = { 400, 500, 700, 1000, 1400 };
 
 public:
     GTN();
 
-    // Специфические методы для добавления труб и КС
-    void AddPipe();
-    void AddCompressorStation();
-    void CreateSuitablePipe(int diameter);
+    int FindOrCreatePipe(int diameter);
 
-    // Соединение КС трубой
-    bool ConnectCS(int startCSID, int endCSID, int diameter);
+    bool ConnectCS(int startCSID, int endCSID, int pipeID);
+    bool isSuitable(int diameter) const;
 
-    // Топологическая сортировка
     std::vector<int> TopologicalSort() const;
 
-    // Вывод информации о графе
     void DisplayNetwork() const;
 
-    std::unordered_map<int, Pipe> GetPipePackage() const;
-    std::unordered_map<int, CS> GetCSPackage() const;
+    std::unordered_map<int, Pipe>& GetPipePackage();
+    std::unordered_map<int, CS>& GetCSPackage();
+    std::unordered_map<int, std::unordered_map<int, int>>& getGraphMat();
 
-    // Вывод информации о трубах и КС
     void DisplayPipes() const;
     void DisplayCompressorStations() const;
+    void DeleteGTN();
 };
