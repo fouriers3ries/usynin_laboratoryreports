@@ -13,7 +13,8 @@ void ShowMenu() {
 	std::cout << "Third laboratory work report by Usynin Daniil (AS-23-04)\n\n" <<
 		"Choose an option to do:\n" << "1. Add pipe\n" << "2. Add CS\n" <<
 		"3. Show all objects\n" << "4. Search for object\n" << "5. Connect pipe and CS in GTN\n" <<
-		"6. Show GTN\n" << "7. Delete GTN\n" << "8. Topological sorting\n" << "9. Save\n" << "10. Load\n" << "0. Exit\n\n";
+		"6. Show GTN\n" << "7. Delete GTN\n" << "8. Topological sorting\n" << "9. Save\n" << "10. Load\n" << 
+		"11. Highest flow in network\n" << "12. Shortest path\n" << "0. Exit\n\n";
 };
 
 void ShowSearchMenu() {
@@ -51,7 +52,7 @@ void LoadGraph(std::ifstream& path, std::unordered_map<int, std::unordered_map<i
 		if (CSPackage.find(startCSID) != CSPackage.end() &&
 			CSPackage.find(endCSID) != CSPackage.end() &&
 			pipePackage.find(pipeID) != pipePackage.end()) {
-			graph[startCSID][endCSID] = pipeID; 
+			graph[startCSID][endCSID] = pipeID;
 		}
 		else {
 			std::cerr << "Warning: Invalid data found in file (CS or Pipe not found). Skipping: "
@@ -259,7 +260,7 @@ void MainMenu() {
 
 	while (true) {
 		ShowMenu();
-		switch (GetCorrectInput(0, 10)) {
+		switch (GetCorrectInput(0, 12)) {
 		case 1: {
 			AddObject(network.GetPipePackage());
 			break;
@@ -348,6 +349,92 @@ void MainMenu() {
 		case 10:
 			Load(network.GetPipePackage(), network.GetCSPackage(), network.getGraphMat());
 			break;
+		case 11: {
+			if (network.getGraphMat().empty()) {
+				std::cout << "There's no networks to find the highest flow!\n";
+			}
+			else {
+				int source, sink;
+				std::cout << "Enter source CS: \n";
+				source = GetCorrectInput(0, INT_MAX); // Получение корректного идентификатора CS
+				std::cout << "Enter sink CS: \n";
+				sink = GetCorrectInput(0, INT_MAX);
+
+				// Проверка существования узлов
+				if (network.GetCSPackage().find(source) == network.GetCSPackage().end()) {
+					std::cout << "Source CS with ID " << source << " does not exist.\n";
+					break;
+				}
+				if (network.GetCSPackage().find(sink) == network.GetCSPackage().end()) {
+					std::cout << "Sink CS with ID " << sink << " does not exist.\n";
+					break;
+				}
+
+				// Вызов алгоритма Эдмондса-Карпа
+				double maxFlow = network.EdmondsKarp(source, sink);
+
+				// Вывод результатов
+				if (maxFlow == 0) {
+					std::cout << "No possible flow between source CS " << source << " and sink CS " << sink << ".\n";
+				}
+				else {
+					std::cout << "Maximum flow in the network from CS " << source << " to CS " << sink << " is: " << maxFlow << '\n';
+				}
+			}
+			break;
+		}
+		case 12: {
+			if (network.getGraphMat().empty()) {
+				std::cout << "There's no networks to find the shortest path!\n";
+			}
+			else {
+				int source, destination;
+				std::cout << "Enter source CS: \n";
+				source = GetCorrectInput(0, INT_MAX); // Получение корректного идентификатора CS
+				std::cout << "Enter destination CS: \n";
+				destination = GetCorrectInput(0, INT_MAX);
+
+				// Проверка существования узлов
+				if (network.GetCSPackage().find(source) == network.GetCSPackage().end()) {
+					std::cout << "Source CS with ID " << source << " does not exist.\n";
+					break;
+				}
+				if (network.GetCSPackage().find(destination) == network.GetCSPackage().end()) {
+					std::cout << "Destination CS with ID " << destination << " does not exist.\n";
+					break;
+				}
+
+				// Вызов алгоритма Дейкстры
+				auto path = network.FindShortestPath(source, destination);
+
+				// Вывод результатов
+				if (path.empty()) {
+					std::cout << "No path found between CS " << source << " and CS " << destination << ".\n";
+				}
+				else {
+					double totalDistance = 0.0;
+					std::cout << "Shortest path from CS " << source << " to CS " << destination << " is: \n";
+					for (size_t i = 0; i < path.size(); ++i) {
+						std::cout << path[i];
+						if (i < path.size() - 1) {
+							std::cout << " -> ";
+						}
+					}
+					std::cout << "\n";
+
+					// Расчет общей длины пути
+					for (size_t i = 1; i < path.size(); ++i) {
+						int from = path[i - 1];
+						int to = path[i];
+						const Pipe& pipe = network.GetPipePackage().at(network.getGraphMat().at(from).at(to));
+						totalDistance += pipe.GetLength();
+					}
+
+					std::cout << "Total distance: " << totalDistance << " meters.\n";
+				}
+			}
+			break;
+		}
 		case 0:
 			return;
 		}

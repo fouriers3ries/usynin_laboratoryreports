@@ -36,6 +36,22 @@ bool Pipe::isConnected() const {
 	return isFree;
 }
 
+float Pipe::GetLength() const {
+	return length;
+}
+
+float calculatePipePerformance(float length, int diameter, int coef = 1000) {
+	return coef * sqrt(pow(diameter * 0.001, 5) / length);
+}
+
+float Pipe::GetPerformance() const {
+	return performance;
+}
+
+void Pipe::SetPerformance(float performance) {
+	this->performance = performance;
+}
+
 void Pipe::CreateSuitablePipe(std::unordered_map<int, Pipe>& destination, int diameter) {
 	pipeID = ++maxID;
 	this->diameter = diameter;
@@ -46,7 +62,20 @@ void Pipe::CreateSuitablePipe(std::unordered_map<int, Pipe>& destination, int di
 	std::cout << "Enter pipe length (in metres): \n";
 	length = GetCorrectInput(0, INT_MAX);
 
+	this->performance = calculatePipePerformance(length, diameter);
 	destination.emplace(GetID(), *this);
+}
+
+void Pipe::CreateReversePipe(std::unordered_map<int, Pipe>& destination, int forwardPipeID, const Pipe& forwardPipe) {
+	pipeID = ++maxID; // Уникальный идентификатор для обратной трубы
+	pipeName = "Reverse of " + forwardPipe.GetName(); // Название обратной трубы
+	length = forwardPipe.GetLength(); // Длина обратной трубы такая же, как у исходной
+	diameter = forwardPipe.GetDiameter(); // Диаметр остается прежним
+	isRepairing = false; // Обратное ребро по умолчанию не в ремонте
+	performance = 0; // Изначально пропускная способность обратного ребра равна 0
+
+	// Добавляем обратную трубу в указанный контейнер
+	destination.emplace(pipeID, *this);
 }
 
 std::istream& operator>>(std::istream& in, Pipe& pipe) {
@@ -60,6 +89,7 @@ std::istream& operator>>(std::istream& in, Pipe& pipe) {
 	pipe.diameter = GetCorrectInput(100, 2000);
 	std::cout << "Enter pipe repairing status (1 - not in repairing, 0 - in repairing): \n";
 	pipe.isRepairing = GetCorrectInput(0, 1);
+	pipe.performance = calculatePipePerformance(pipe.length, pipe.diameter);
 	return in;
 }
 
@@ -75,14 +105,14 @@ std::ostream& operator<<(std::ostream& out, const Pipe& pipe) {
 
 std::ofstream& operator<< (std::ofstream& fout, const Pipe& pipe) {
 	fout << pipe.pipeID << '\n' << pipe.pipeName << '\n' << pipe.length << '\n' <<
-		pipe.diameter << '\n' << pipe.isRepairing << '\n' << pipe.isFree << '\n';
+		pipe.diameter << '\n' << pipe.isRepairing << '\n' << pipe.isFree << '\n' << pipe.performance << '\n';
 	return fout;
 }
 
 std::ifstream& operator>> (std::ifstream& fin, Pipe& pipe) {
 	fin >> pipe.pipeID;
 	std::getline(fin >> std::ws, pipe.pipeName) >> pipe.length >>
-		pipe.diameter >> pipe.isRepairing >> pipe.isFree;
+		pipe.diameter >> pipe.isRepairing >> pipe.isFree >> pipe.performance;
 	pipe.maxID = pipe.pipeID;
 	return fin;
 }
